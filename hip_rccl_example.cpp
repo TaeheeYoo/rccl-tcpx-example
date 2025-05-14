@@ -6,6 +6,18 @@
 
 #define N 1024
 
+#define HIP_CHECK(expression)                  \
+{                                              \
+    const hipError_t status = expression;      \
+    if(status != hipSuccess){                  \
+        std::cerr << "HIP error "              \
+                  << status << ": "            \
+                  << hipGetErrorString(status) \
+                  << " at " << __FILE__ << ":" \
+                  << __LINE__ << std::endl;    \
+    }                                          \
+}
+
 void check_nccl(ncclResult_t result)
 {
 	if (result != ncclSuccess) {
@@ -40,25 +52,27 @@ int main(int argc, char *argv[])
 	/* TODO
 	 * 0 to local rank
 	 */
-	hipGetDeviceProperties(&devProp, 0);
+	HIP_CHECK(hipGetDeviceProperties(&devProp, 0));
 	cout << " System minor " << devProp.minor << endl;
 	cout << " System major " << devProp.major << endl;
 	cout << " agent prop name " << devProp.name << endl;
 	cout << "hip Device prop succeeded " << endl ;
 
-	hipMalloc(&d_data, N * sizeof(float));
+	HIP_CHECK(hipMalloc(&d_data, N * sizeof(float)));
 
 	check_nccl(ncclCommInitRank(&comm, size, comm_id, rank));
 
 	std::vector<float> h_data(N, rank + 1.0f);
-	hipMemcpy(d_data, h_data.data(), N * sizeof(float), hipMemcpyHostToDevice);
+	HIP_CHECK(hipMemcpy(d_data, h_data.data(), N * sizeof(float),
+			    hipMemcpyHostToDevice));
 
 	check_nccl(ncclAllReduce(d_data, d_data, N, ncclFloat, ncclSum, comm, 0));
 
-	hipMemcpy(h_data.data(), d_data, N * sizeof(float), hipMemcpyDeviceToHost);
+	HIP_CHECK(hipMemcpy(h_data.data(), d_data, N * sizeof(float),
+		            hipMemcpyDeviceToHost));
 	std::cout << "Rank " << rank << " result: " << h_data[0] << std::endl;
 
-	hipFree(d_data);
+	HIP_CHECK(hipFree(d_data));
 	ncclCommDestroy(comm);
 
 	return 0;
