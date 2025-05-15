@@ -36,9 +36,7 @@ int main(int argc, char *argv[])
 	ncclComm_t comm;
 	float *d_data;
 
-	MPI_Init(&argc, &argv);
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	size = 2;
 
 	if (rank == 0) {
 		ncclGetUniqueId(&comm_id);
@@ -79,7 +77,6 @@ int main(int argc, char *argv[])
 	HIP_CHECK(hipFree(d_data));
 	ncclCommDestroy(comm);
 
-	MPI_Finalize();
 	return 0;
 }
 
