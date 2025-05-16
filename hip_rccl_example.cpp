@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
 	ncclUniqueId comm_id;
 	ncclComm_t comm;
 	float *d_data;
+	hipStream_t s;
 
 	size = 2;
 
@@ -67,7 +68,15 @@ int main(int argc, char *argv[])
 	HIP_CHECK(hipMemcpy(d_data, h_data.data(), N * sizeof(float),
 			    hipMemcpyHostToDevice));
 
+#if 0
 	check_nccl(ncclAllReduce(d_data, d_data, N, ncclFloat, ncclSum, comm, 0));
+#else
+	if (!rank) {
+		check_nccl(ncclSend(d_data, N, ncclFloat, 1, comm, s));
+	} else {
+		check_nccl(ncclRecv(d_data, N, ncclFloat, 1, comm, s));
+	}
+#endif
 
 	HIP_CHECK(hipMemcpy(h_data.data(), d_data, N * sizeof(float),
 		            hipMemcpyDeviceToHost));
