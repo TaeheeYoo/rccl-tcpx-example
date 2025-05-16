@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 	cout << " agent prop name " << devProp.name << endl;
 	cout << "hip Device prop succeeded " << endl ;
 
-	hipStreamCreate(&s);
+	HIP_CHECK(hipStreamCreate(&s));
 
 	HIP_CHECK(hipMalloc(&d_data, N * sizeof(float)));
 
