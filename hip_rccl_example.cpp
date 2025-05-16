@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 	if (!rank) {
 		check_nccl(ncclSend(d_data, N, ncclFloat, 1, comm, s));
 	} else {
-		check_nccl(ncclRecv(d_data, N, ncclFloat, 1, comm, s));
+		check_nccl(ncclRecv(d_data, N, ncclFloat, 0, comm, s));
 	}
 #endif
 
