@@ -22,6 +22,13 @@
     }                                          \
 }
 
+#define show_comm_id(comm_id)					\
+	do {							\
+		for (int i = 0; i < NCCL_UNIQUE_ID_BYTES; i++)	\
+			printf("%x", comm_id.internal[i]);	\
+		printf("\n");					\
+	} while(0)
+
 void check_nccl(ncclResult_t result)
 {
 	if (result != ncclSuccess) {
@@ -33,9 +40,11 @@ void check_nccl(ncclResult_t result)
 void send_unique_id(ncclUniqueId comm_id, const char *ipaddr)
 {
 	struct sockaddr_in sockaddr;
-	int servfd, clntfd;
+	int servfd, clntfd, retval;
 
 	servfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (servfd == -1)
+		perror("socket() error: ");
 
 	memset(&sockaddr, 0x00, sizeof(struct sockaddr_in));
 
@@ -43,12 +52,18 @@ void send_unique_id(ncclUniqueId comm_id, const char *ipaddr)
 	sockaddr.sin_addr.s_addr = inet_addr(ipaddr);
 	sockaddr.sin_port = htons(4091);
 
-	bind(servfd, (struct sockaddr *) &sockaddr, sizeof(sockaddr));
-	listen(servfd, 15);
+	if (bind(servfd, (struct sockaddr *) &sockaddr, sizeof(sockaddr)) != 0)
+		perror("bind() error: ");
+
+	if (listen(servfd, 15) != 0)
+		perror("listen() error: ");
 
 	clntfd = accept(servfd, NULL, 0);
+	if (clntfd == -1)
+		perror("accept() error: ");
 
-	send(clntfd, &comm_id, sizeof(ncclUniqueId), 0);
+	retval = send(clntfd, &comm_id, sizeof(ncclUniqueId), 0);
+
 	close(clntfd);
 
 	close(servfd);
@@ -58,9 +73,11 @@ ncclUniqueId recv_unique_id(const char *ipaddr)
 {
 	struct sockaddr_in sockaddr;
 	ncclUniqueId comm_id;
-	int servfd, clntfd;
+	int clntfd, retval;
 
 	clntfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (clntfd == -1)
+		perror("socket() error: ");
 
 	memset(&sockaddr, 0x00, sizeof(struct sockaddr_in));
 
@@ -68,10 +85,11 @@ ncclUniqueId recv_unique_id(const char *ipaddr)
 	sockaddr.sin_addr.s_addr = inet_addr(ipaddr);
 	sockaddr.sin_port = htons(4091);
 
-	servfd = connect(clntfd, (struct sockaddr *) &sockaddr, sizeof(sockaddr));
+	retval = connect(clntfd, (struct sockaddr *) &sockaddr, sizeof(sockaddr));
+	if (retval == -1)
+		perror("accept() error");
 
-	recv(servfd, &comm_id, sizeof(ncclUniqueId), 0);
-	close(servfd);
+	retval = recv(clntfd, &comm_id, sizeof(ncclUniqueId), 0);
 
 	close(clntfd);
 
@@ -96,6 +114,7 @@ int main(int argc, char *argv[])
 	} else {
 		comm_id = recv_unique_id(argv[2]);
 	}
+	show_comm_id(comm_id);
 
 	/* TODO
 	 * 0 to local rank
