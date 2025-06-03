@@ -4,6 +4,10 @@
 #include <iostream>
 #include <vector>
 
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
 #define N 1024
 
 #define HIP_CHECK(expression)                  \
@@ -26,6 +30,50 @@ void check_nccl(ncclResult_t result)
 	}
 }
 
+void send_unique_id(ncclUniqueId comm_id, const char *ipaddr)
+{
+	struct sockaddr_in *sockaddr;
+	int servfd, clntfd;
+
+	servfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+	sockaddr->sin_family = inet_addr(ipaddr);
+	sockaddr->sin_addr.s_addr = INADDR_ANY;
+	sockaddr->sin_port = htons(4091);
+
+	bind(servfd, (struct sockaddr *) &sockaddr, sizeof(sockaddr));
+	listen(servfd, 15);
+
+	clntfd = accept(servfd, NULL, 0);
+
+	send(clntfd, &comm_id, sizeof(ncclUniqueId), 0);
+	close(clntfd);
+
+	close(servfd);
+}
+
+ncclUniqueId recv_unique_id(const char *ipaddr)
+{
+	struct sockaddr_in *sockaddr;
+	ncclUniqueId comm_id;
+	int servfd, clntfd;
+
+	clntfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+	sockaddr->sin_family = inet_addr(ipaddr);
+	sockaddr->sin_addr.s_addr = INADDR_ANY;
+	sockaddr->sin_port = htons(4091);
+
+	servfd = connect(clntfd, (struct sockaddr *) &sockaddr, sizeof(sockaddr));
+
+	recv(servfd, &comm_id, sizeof(ncclUniqueId), 0);
+	close(servfd);
+
+	close(clntfd);
+
+	return comm_id;
+}
+
 using namespace std;
 int main(int argc, char *argv[])
 {
@@ -40,15 +88,9 @@ int main(int argc, char *argv[])
 
 	if (rank == 0) {
 		ncclGetUniqueId(&comm_id);
-		std::ofstream out("nccl_unique_id.txt", std::ios::binary);
-		out.write((char *)&comm_id, sizeof(comm_id));
-		out.close();
-	}
-
-	if (rank != 0) {
-		std::ifstream in("nccl_unique_id.txt", std::ios::binary);
-		in.read((char *)&comm_id, sizeof(comm_id));
-		in.close();
+		send_unique_id(comm_id, argv[2]);
+	} else {
+		comm_id = recv_unique_id(argv[2]);
 	}
 
 	/* TODO
