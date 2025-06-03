@@ -32,14 +32,14 @@ void check_nccl(ncclResult_t result)
 
 void send_unique_id(ncclUniqueId comm_id, const char *ipaddr)
 {
-	struct sockaddr_in *sockaddr;
+	struct sockaddr_in sockaddr;
 	int servfd, clntfd;
 
 	servfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-	sockaddr->sin_family = AF_INET;
-	sockaddr->sin_addr.s_addr = inet_addr(ipaddr);
-	sockaddr->sin_port = htons(4091);
+	sockaddr.sin_family = AF_INET;
+	sockaddr.sin_addr.s_addr = inet_addr(ipaddr);
+	sockaddr.sin_port = htons(4091);
 
 	bind(servfd, (struct sockaddr *) &sockaddr, sizeof(sockaddr));
 	listen(servfd, 15);
@@ -54,15 +54,15 @@ void send_unique_id(ncclUniqueId comm_id, const char *ipaddr)
 
 ncclUniqueId recv_unique_id(const char *ipaddr)
 {
-	struct sockaddr_in *sockaddr;
+	struct sockaddr_in sockaddr;
 	ncclUniqueId comm_id;
 	int servfd, clntfd;
 
 	clntfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-	sockaddr->sin_family = AF_INET;
-	sockaddr->sin_addr.s_addr = inet_addr(ipaddr);
-	sockaddr->sin_port = htons(4091);
+	sockaddr.sin_family = AF_INET;
+	sockaddr.sin_addr.s_addr = inet_addr(ipaddr);
+	sockaddr.sin_port = htons(4091);
 
 	servfd = connect(clntfd, (struct sockaddr *) &sockaddr, sizeof(sockaddr));
 
