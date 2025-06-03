@@ -37,6 +37,17 @@ void check_nccl(ncclResult_t result)
 	}
 }
 
+int reuse_address(int fd)
+{
+	int sockopt = 1;
+
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, 
+		       &sockopt, sizeof(sockopt)) == -1)
+		return -1;
+
+	return 0;
+}
+
 void send_unique_id(ncclUniqueId comm_id, const char *ipaddr)
 {
 	struct sockaddr_in sockaddr;
@@ -45,6 +56,9 @@ void send_unique_id(ncclUniqueId comm_id, const char *ipaddr)
 	servfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (servfd == -1)
 		perror("socket() error: ");
+
+	if (reuse_address(servfd) == -1)
+		perror("reuse_address() error: ");
 
 	memset(&sockaddr, 0x00, sizeof(struct sockaddr_in));
 
