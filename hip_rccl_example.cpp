@@ -37,6 +37,8 @@ void send_unique_id(ncclUniqueId comm_id, const char *ipaddr)
 
 	servfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
+	memset(&sockaddr, 0x00, sizeof(struct sockaddr_in));
+
 	sockaddr.sin_family = AF_INET;
 	sockaddr.sin_addr.s_addr = inet_addr(ipaddr);
 	sockaddr.sin_port = htons(4091);
@@ -59,6 +61,8 @@ ncclUniqueId recv_unique_id(const char *ipaddr)
 	int servfd, clntfd;
 
 	clntfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+	memset(&sockaddr, 0x00, sizeof(struct sockaddr_in));
 
 	sockaddr.sin_family = AF_INET;
 	sockaddr.sin_addr.s_addr = inet_addr(ipaddr);
