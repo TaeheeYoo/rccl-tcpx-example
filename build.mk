@@ -1,0 +1,3 @@
+IFNAME := enp4s0
+DEBUG_LEVEL := INFO
+PLUGIN_NAME := tcpx
