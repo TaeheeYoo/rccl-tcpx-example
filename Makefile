@@ -9,4 +9,5 @@ run:
 	NCCL_DEBUG=$(DEBUG_LEVEL)		\
 	NCCL_NET_PLUGIN=$(PLUGIN_NAME)	\
 	NCCL_TCPX_IFNAMES=$(IFNAME)		\
+	LD_LIBRARY_PATH=$(shell pwd)	\
 		./hip_rccl_example $(file < run.mk)
