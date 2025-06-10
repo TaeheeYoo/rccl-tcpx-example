@@ -1,5 +1,0 @@
-export NCCL_SOCKET_IFNAME=enp1s0f2np2
-export NCCL_IB_DISABLE=1
-export NCCL_DEBUG=INFO
-export NCCL_NET_PLUGIN=tcpx
-export NCCL_TCPX_IFNAMES=enp1s0f2np2
