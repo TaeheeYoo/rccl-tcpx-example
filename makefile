@@ -50,7 +50,7 @@ CTAGS_OUT := tags
 COMPILE_DB_OUT := compile_commands.json
 
 # Constants
-SYNC_TIME := $(shell date)
+SYNC_TIME := $(shell LC_ALL=C date)
 
 # Internal
 .DEFAULT_GOAL = help
@@ -288,7 +288,7 @@ install:
 
 .PHONY: run
 run: $(OUT_DIR)/$(OUTPUT)
-	@$(ENVIRONMENTS) ./$(OUT_DIR)/$(OUTPUT) $(ARGUMENTS)
+	$(ENVIRONMENTS) ./$(OUT_DIR)/$(OUTPUT) $(ARGUMENTS)
 
 .PHONY: example
 example:
