@@ -50,7 +50,7 @@ CTAGS_OUT := tags
 COMPILE_DB_OUT := compile_commands.json
 
 # Constants
-SYNC_TIME := $(shell date)
+SYNC_TIME := $(LC_ALL=C shell date)
 
 # Internal
 .DEFAULT_GOAL = help
@@ -107,7 +107,7 @@ $(OUT_DIR)/$1:: $(BLDFILE)
 	$(TOUCH) -c $(SRC) TEMP -d "$(SYNC_TIME)"
 
 $(OUT_DIR)/$1:: $(OBJ) $(ARV)
-	$(CC) -o $$@ $$^ $$(LDFLAGS) -shared $(LDLIBS) -Wl,-soname,$2
+	$(CC) $$(LDFLAGS) -o $$@ $$^ -shared $$(LDLIBS) -Wl,-soname,$2
 
 endef
 
@@ -150,7 +150,7 @@ $(OUT_DIR)/$1:: $(BLDFILE)
 	$(TOUCH) -c $(SRC) TEMP -d "$(SYNC_TIME)"
 
 $(OUT_DIR)/$1:: $(OBJ) $(ARV)
-	$(CC) -o $$@ $$^ $(LDLIBS)
+	$(CC) $(LDFLAGS) -o $$@ $$^ $(LDLIBS)
 
 endef
 
