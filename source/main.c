@@ -159,8 +159,10 @@ int main(int argc, char *argv[])
 		            hipMemcpyDeviceToHost));
 	std::cout << "Rank " << rank << " result: " << h_data[0] << std::endl;
 
+	check_nccl(ncclCommDestroy(comm));
+
 	HIP_CHECK(hipFree(d_data));
-	ncclCommDestroy(comm);
+	HIP_CHECK(hipStreamDestroy(s));
 
 	return 0;
 }
