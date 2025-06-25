@@ -1,6 +1,5 @@
 #include <hip/hip_runtime.h>
 #include <rccl/rccl.h>
-#include <fstream>
 #include <iostream>
 #include <vector>
 
