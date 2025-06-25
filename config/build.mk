@@ -1,4 +1,4 @@
-CC := clang++
+CXX := clang++
 
 CPPFLAGS := -D__HIP_PLATFORM_AMD__ -I$(RCCL_ROOT)/include
 
