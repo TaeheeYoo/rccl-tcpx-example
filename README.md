@@ -10,6 +10,5 @@ make all RCCL_ROOT=/opt/rccl-gfx1030/
 
 # 2. Run
 ```bash
-make run SERVER=0 ADDRESS=192.168.0.49 IFNAME=enp7s0	    \
-		 ADDITIONAL_ENV=HSA_OVERRIDE_GFX_VERSION=10.3.0
+make run RCCL_ROOT=/opt/rccl-gfx1030/ ARGUMENTS="0 192.168.0.49"
 ```
