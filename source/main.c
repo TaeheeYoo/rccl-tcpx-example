@@ -1,38 +1,39 @@
-#include <rccl/rccl.h>
-
-#include <iostream>
-#include <vector>
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
 
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
-#define N 1024
+#include <rccl/rccl.h>
 
-#define HIP_CHECK(expression)                  \
-{                                              \
-    const hipError_t status = expression;      \
-    if(status != hipSuccess){                  \
-        std::cerr << "HIP error "              \
-                  << status << ": "            \
-                  << hipGetErrorString(status) \
-                  << " at " << __FILE__ << ":" \
-                  << __LINE__ << std::endl;    \
-    }                                          \
+#define N 1024
+#define NODES 2
+
+#define HIP_CHECK(expression)                  				\
+{                                              				\
+    const hipError_t status = expression;      				\
+    if(status != hipSuccess) {                  			\
+        fprintf(stderr,"HIP error %d: %s: at %s:%d",			\
+		       status, hipGetErrorString(status),		\
+		       __FILE__, __LINE__);				\
+    }									\
 }
 
 void show_comm_id(ncclUniqueId id)
 {
 	for (int i = 0; i < NCCL_UNIQUE_ID_BYTES; i++)
-		std::cout << std::hex << id.internal[i];
+		printf("%x", id.internal[i]);
 
-	std::cout << std::endl;
+	putchar('\n');
 }
 
 void check_nccl(ncclResult_t result)
 {
 	if (result != ncclSuccess) {
-		std::cerr << "RCCL error: " << ncclGetErrorString(result) << std::endl;
+		printf("RCCL error: %s\n", ncclGetErrorString(result));
 		exit(1);
 	}
 }
@@ -110,18 +111,23 @@ ncclUniqueId recv_unique_id(const char *ipaddr)
 	return comm_id;
 }
 
-using namespace std;
 int main(int argc, char *argv[])
 {
-	int size, rank = std::stoi(argv[1]);
-	hipDeviceProp_t devProp;
 	ncclUniqueId comm_id;
+
+	hipDeviceProp_t devProp;
 	ncclComm_t comm;
-	float *d_data;
 	hipStream_t s;
 
-	size = 2;
+	float *d_data, *h_data;
+	int rank;
 
+	if (argc != 3) {
+		fprintf(stderr, "usage: %s <rank> <address>\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
+	
+	rank = strtol(argv[1], NULL, 10);
 	if (rank == 0) {
 		ncclGetUniqueId(&comm_id);
 		send_unique_id(comm_id, argv[2]);
@@ -131,20 +137,27 @@ int main(int argc, char *argv[])
 
 	show_comm_id(comm_id);
 
+	h_data = malloc(sizeof(float) * N);
+	if (h_data == NULL) {
+		fprintf(stderr, "failed to malloc(): %s", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	for (int i = 0; i < N; i++)
+		h_data[i] = rank + 1.0f;
+
 	HIP_CHECK(hipGetDeviceProperties(&devProp, 0));
-	cout << " System minor " << devProp.minor << endl;
-	cout << " System major " << devProp.major << endl;
-	cout << " agent prop name " << devProp.name << endl;
-	cout << "hip Device prop succeeded " << endl ;
+	printf("System minor %d\n", devProp.minor);
+	printf("System major %d\n", devProp.major);
+	printf("Hip Device Prop Succeeded!\n");
 
 	HIP_CHECK(hipStreamCreate(&s));
 
-	HIP_CHECK(hipMalloc(&d_data, N * sizeof(float)));
+	HIP_CHECK(hipMalloc((void **) &d_data, N * sizeof(float)));
 
-	check_nccl(ncclCommInitRank(&comm, size, comm_id, rank));
+	check_nccl(ncclCommInitRank(&comm, NODES, comm_id, rank));
 
-	std::vector<float> h_data(N, rank + 1.0f);
-	HIP_CHECK(hipMemcpy(d_data, h_data.data(), N * sizeof(float),
+	HIP_CHECK(hipMemcpy(d_data, h_data, N * sizeof(float),
 			    hipMemcpyHostToDevice));
 
 	if (!rank) {
@@ -153,9 +166,10 @@ int main(int argc, char *argv[])
 		check_nccl(ncclRecv(d_data, N, ncclFloat, 0, comm, s));
 	}
 
-	HIP_CHECK(hipMemcpy(h_data.data(), d_data, N * sizeof(float),
+	HIP_CHECK(hipMemcpy(h_data, d_data, N * sizeof(float),
 		            hipMemcpyDeviceToHost));
-	std::cout << "Rank " << rank << " result: " << h_data[0] << std::endl;
+
+	printf("Rank %d result: %f\n", rank, h_data[0]);
 
 	check_nccl(ncclCommDestroy(comm));
 
