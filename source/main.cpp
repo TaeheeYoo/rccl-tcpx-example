@@ -1,5 +1,5 @@
-#include <hip/hip_runtime.h>
 #include <rccl/rccl.h>
+
 #include <iostream>
 #include <vector>
 
@@ -21,12 +21,13 @@
     }                                          \
 }
 
-#define show_comm_id(comm_id)					\
-	do {							\
-		for (int i = 0; i < NCCL_UNIQUE_ID_BYTES; i++)	\
-			printf("%x", comm_id.internal[i]);	\
-		printf("\n");					\
-	} while(0)
+void show_comm_id(ncclUniqueId id)
+{
+	for (int i = 0; i < NCCL_UNIQUE_ID_BYTES; i++)
+		std::cout << std::hex << id.internal[i];
+
+	std::cout << std::endl;
+}
 
 void check_nccl(ncclResult_t result)
 {
@@ -127,11 +128,9 @@ int main(int argc, char *argv[])
 	} else {
 		comm_id = recv_unique_id(argv[2]);
 	}
+
 	show_comm_id(comm_id);
 
-	/* TODO
-	 * 0 to local rank
-	 */
 	HIP_CHECK(hipGetDeviceProperties(&devProp, 0));
 	cout << " System minor " << devProp.minor << endl;
 	cout << " System major " << devProp.major << endl;
@@ -165,4 +164,3 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
-
