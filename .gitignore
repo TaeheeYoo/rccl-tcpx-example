@@ -3,3 +3,5 @@ output/
 makefile
 library/
 .cache/
+
+compile_commands.json
