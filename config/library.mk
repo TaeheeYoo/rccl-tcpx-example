@@ -1,1 +1,1 @@
-TaeheeYoo/rccl-tcpx shared net-rccl-tcpx
+TaeheeYoo/rccl-tcpx shared rccl-net
